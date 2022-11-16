@@ -16,16 +16,20 @@ def init_params(m):
 
 
 class ACModel(nn.Module, torch_ac.RecurrentACModel):
-    def __init__(self, obs_space, action_space, use_memory=False, use_text=False):
-        super().__init__()
+    def __init__(self, obs_space, action_space, world_size, use_memory=False, use_text=False):
+        super().__init__()      #inherent all methods and properties from parent class
 
         # Decide which components are enabled
+        self.world_n = world_size[0]
+        self.world_m = world_size[1]
         self.use_text = use_text
         self.use_memory = use_memory
+        vision_n = obs_space["image"][0]
+        vision_m = obs_space["image"][1]
 
         # Define image embedding
         self.image_conv = nn.Sequential(
-            nn.Conv2d(3, 16, (2, 2), padding=1),
+            nn.Conv2d(3, 16, (2, 2), padding=((self.world_n-2-vision_n)//2, (self.world_m-2-vision_m)//2)),
             nn.ReLU(),
             nn.MaxPool2d((2, 2)),
             nn.Conv2d(16, 32, (2, 2)),
@@ -33,9 +37,15 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
             nn.Conv2d(32, 64, (2, 2)),
             nn.ReLU()
         )
-        n = obs_space["image"][0]
-        m = obs_space["image"][1]
-        self.image_embedding_size = ((n-1)//2-2)*((m-1)//2-2)*64
+        self.image_embedding_size = ((self.world_n-2-1)//2-2)*((self.world_m-2-1)//2-2)*64
+        # self.image_embedding_size = 1*64  # whatever the view range is, make the final embedding size to 1*64
+
+        self.goal_mlp = nn.Sequential(
+            nn.Linear(self.world_m + self.world_n, self.image_embedding_size//2), #(18,32)
+            nn.ReLU(),
+            nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
+            nn.ReLU()
+        )
 
         # Define memory
         if self.use_memory:
@@ -50,6 +60,7 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
 
         # Resize image embedding
         self.embedding_size = self.semi_memory_size
+        self.embedding_size += self.image_embedding_size   # allow for goal embedding
         if self.use_text:
             self.embedding_size += self.text_embedding_size
 
@@ -78,10 +89,14 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
     def semi_memory_size(self):
         return self.image_embedding_size
 
-    def forward(self, obs, memory):
+    def forward(self, obs, goal, memory):
         x = obs.image.transpose(1, 3).transpose(2, 3)
+        goal = goal.repeat([x.shape[0],1]).type(torch.FloatTensor)
+
         x = self.image_conv(x)
-        x = x.reshape(x.shape[0], -1)   #x.shape=[16,64]=[batch_size,channel_number]
+        x = x.reshape(x.shape[0], -1)   #x.shape=[batch_size,channel_number]
+
+        goal_after = self.goal_mlp(goal)
 
         if self.use_memory:
             hidden = (memory[:, :self.semi_memory_size], memory[:, self.semi_memory_size:])
@@ -90,6 +105,8 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
             memory = torch.cat(hidden, dim=1)
         else:
             embedding = x
+
+        embedding = torch.cat((embedding, goal_after), dim=1)
 
         if self.use_text:
             embed_text = self._get_embed_text(obs.text)

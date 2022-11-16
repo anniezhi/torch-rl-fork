@@ -28,6 +28,8 @@ parser.add_argument("--memory", action="store_true", default=False,
                     help="add a LSTM to the model")
 parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model")
+parser.add_argument("--agent-view-size", type=int, default=7,
+                    help="agent vision square length")
 
 args = parser.parse_args()
 
@@ -41,7 +43,7 @@ print(f"Device: {device}\n")
 
 # Load environment
 
-env = utils.make_env(args.env, args.seed, render_mode="human")
+env = utils.make_env(args.env, args.seed, render_mode="human", agent_view_size=args.agent_view_size)
 for _ in range(args.shift):
     env.reset()
 print("Environment loaded\n")
@@ -49,8 +51,8 @@ print("Environment loaded\n")
 # Load agent
 
 model_dir = utils.get_model_dir(args.model)
-agent = utils.Agent(env.observation_space, env.action_space, model_dir,
-                    argmax=args.argmax, use_memory=args.memory, use_text=args.text)
+agent = utils.Agent(env.observation_space, env.action_space, (env.spec.kwargs['size'],env.spec.kwargs['size']), env.goal,
+                    model_dir, argmax=args.argmax, use_memory=args.memory, use_text=args.text)
 print("Agent loaded\n")
 
 # Run the agent

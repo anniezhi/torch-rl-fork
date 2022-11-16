@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 import utils
 from .other import device
@@ -12,10 +13,11 @@ class Agent:
     - to choose an action given an observation,
     - to analyze the feedback (i.e. reward and done state) of its action."""
 
-    def __init__(self, obs_space, action_space, model_dir,
-                 argmax=False, num_envs=1, use_memory=False, use_text=False):
+    def __init__(self, obs_space, action_space, world_size, goal,
+                 model_dir, argmax=False, num_envs=1, use_memory=False, use_text=False):
         obs_space, self.preprocess_obss = utils.get_obss_preprocessor(obs_space)
-        self.acmodel = ACModel(obs_space, action_space, use_memory=use_memory, use_text=use_text)
+        self.goal = torch.flatten(F.one_hot(torch.tensor(goal), num_classes=world_size[0])).type(torch.FloatTensor)
+        self.acmodel = ACModel(obs_space, action_space, world_size, use_memory=use_memory, use_text=use_text)
         self.argmax = argmax
         self.num_envs = num_envs
 
@@ -33,7 +35,7 @@ class Agent:
 
         with torch.no_grad():
             if self.acmodel.recurrent:
-                dist, _, self.memories = self.acmodel(preprocessed_obss, self.memories)
+                dist, _, self.memories = self.acmodel(preprocessed_obss, self.goal, self.memories)
             else:
                 dist, _ = self.acmodel(preprocessed_obss)
 

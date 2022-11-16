@@ -61,6 +61,8 @@ parser.add_argument("--recurrence", type=int, default=1,
                     help="number of time-steps gradient is backpropagated (default: 1). If > 1, a LSTM is added to the model to have memory.")
 parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model to handle text input")
+parser.add_argument("--agent-view-size", type=int, default=7,
+                    help="agent vision square length")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -98,7 +100,7 @@ if __name__ == "__main__":
 
     envs = []
     for i in range(args.procs):
-        envs.append(utils.make_env(args.env, args.seed + 10000 * i))
+        envs.append(utils.make_env(args.env, args.seed + 10000 * i, agent_view_size=args.agent_view_size))
     txt_logger.info("Environments loaded\n")
 
     # Load training status
@@ -118,7 +120,7 @@ if __name__ == "__main__":
 
     # Load model
 
-    acmodel = ACModel(obs_space, envs[0].action_space, args.mem, args.text)
+    acmodel = ACModel(obs_space, envs[0].action_space, (envs[0].spec.kwargs['size'],envs[0].spec.kwargs['size']), args.mem, args.text)
     if "model_state" in status:
         acmodel.load_state_dict(status["model_state"])
     acmodel.to(device)

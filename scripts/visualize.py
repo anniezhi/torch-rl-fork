@@ -30,6 +30,8 @@ parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model")
 parser.add_argument("--agent-view-size", type=int, default=7,
                     help="agent vision square length")
+parser.add_argument("--agent-speed", type=int, default=1,
+                    help="agent maximum step size at one move")
 
 args = parser.parse_args()
 
@@ -43,7 +45,7 @@ print(f"Device: {device}\n")
 
 # Load environment
 
-env = utils.make_env(args.env, args.seed, render_mode="human", agent_view_size=args.agent_view_size)
+env = utils.make_env(args.env, args.seed, render_mode="human", agent_view_size=args.agent_view_size, agent_speed=args.agent_speed)
 for _ in range(args.shift):
     env.reset()
 print("Environment loaded\n")

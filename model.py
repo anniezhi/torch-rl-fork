@@ -63,6 +63,8 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         self.embedding_size += self.image_embedding_size   # allow for goal embedding
         if self.use_text:
             self.embedding_size += self.text_embedding_size
+        if self.use_memory:
+            self.embedding_size += self.semi_memory_size
 
         # Define actor's model
         self.actor = nn.Sequential(
@@ -101,12 +103,10 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         if self.use_memory:
             hidden = (memory[:, :self.semi_memory_size], memory[:, self.semi_memory_size:])
             hidden = self.memory_rnn(x, hidden)
-            embedding = hidden[0]
             memory = torch.cat(hidden, dim=1)
+            embedding = torch.cat((x, hidden[0], goal_after), dim=1)
         else:
-            embedding = x
-
-        embedding = torch.cat((embedding, goal_after), dim=1)
+            embedding = torch.cat((x, goal_after), dim=1)
 
         if self.use_text:
             embed_text = self._get_embed_text(obs.text)

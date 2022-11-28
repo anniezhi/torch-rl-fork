@@ -28,6 +28,12 @@ parser.add_argument("--memory", action="store_true", default=False,
                     help="add a LSTM to the model")
 parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model")
+parser.add_argument("--agent-view-size", type=int, default=7,
+                    help="agent vision square length")
+parser.add_argument("--agent-speed", type=int, default=1,
+                    help="agent maximum step size at one move")
+parser.add_argument("--shuffle", type=str, 
+                    help="shuffling obstacles during episodes")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -44,7 +50,7 @@ if __name__ == "__main__":
 
     envs = []
     for i in range(args.procs):
-        env = utils.make_env(args.env, args.seed + 10000 * i)
+        env = utils.make_env(args.env, args.seed + 10000 * i, agent_view_size=args.agent_view_size, agent_speed=args.agent_speed, shuffle=args.shuffle)
         envs.append(env)
     env = ParallelEnv(envs)
     print("Environments loaded\n")
@@ -52,7 +58,9 @@ if __name__ == "__main__":
     # Load agent
 
     model_dir = utils.get_model_dir(args.model)
-    agent = utils.Agent(env.observation_space, env.action_space, model_dir,
+    agent = utils.Agent(env.observation_space, env.action_space,
+                        (env.envs[0].spec.kwargs['size'],env.envs[0].spec.kwargs['size']),
+                        env.envs[0].goal, model_dir,
                         argmax=args.argmax, num_envs=args.procs,
                         use_memory=args.memory, use_text=args.text)
     print("Agent loaded\n")

@@ -38,16 +38,19 @@ class Agent:
                 dist, _, self.memories = self.acmodel(preprocessed_obss, self.goal, self.memories)
             else:
                 dist, _ = self.acmodel(preprocessed_obss)
+        dist, dist_scale = dist
 
         if self.argmax:
             actions = dist.probs.max(1, keepdim=True)[1]
+            actions_scale = dist_scale.probs.max(1, keepdim=True)[1]
         else:
             actions = dist.sample()
+            actions_scale = dist_scale.sample()
 
-        return actions.cpu().numpy()
+        return actions.cpu().numpy(), actions_scale.cpu().numpy()
 
     def get_action(self, obs):
-        return self.get_actions([obs])[0]
+        return (self.get_actions([obs])[0][0], self.get_actions([obs])[1][0])
 
     def analyze_feedbacks(self, rewards, dones):
         if self.acmodel.recurrent:

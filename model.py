@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
+from torch.distributions.normal import Normal
 import torch_ac
 
 
@@ -80,6 +81,19 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
             nn.Linear(64, 1)
         )
 
+        # Define actor model for action scale -- normal distribution
+        self.actor_scale = nn.Sequential(
+            nn.Linear(self.embedding_size, 64),
+            nn.ReLU(),
+            nn.Linear(64, 2),
+        )
+
+        self.critic_scale = nn.Sequential(
+            nn.Linear(self.embedding_size, 64),
+            nn.ReLU(),
+            nn.Linear(64,1)
+        )
+
         # Initialize parameters correctly
         self.apply(init_params)
 
@@ -118,7 +132,15 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         x = self.critic(embedding)
         value = x.squeeze(1)
 
-        return dist, value, memory
+        scale = self.actor_scale(embedding)
+        scale_mu = scale[:,0]
+        scale_logsigma = torch.clip(scale[:,1], -5, 2)   #range is copied from https://github.com/odelalleau/CORL/blob/main/algorithms/sac_n.py
+        dist_scale = Normal(scale_mu, torch.exp(scale_logsigma))
+
+        scale = self.critic_scale(embedding)
+        value_scale = torch.clamp(scale.squeeze(1), 0, 1)
+
+        return (dist, dist_scale), (value, value_scale), memory
 
     def _get_embed_text(self, text):
         _, hidden = self.text_rnn(self.word_embedding(text))

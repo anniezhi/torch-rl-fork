@@ -85,12 +85,14 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         self.actor_scale = nn.Sequential(
             nn.Linear(self.embedding_size, 64),
             nn.ReLU(),
+            # nn.Tanh(),
             nn.Linear(64, 2),
         )
 
         self.critic_scale = nn.Sequential(
             nn.Linear(self.embedding_size, 64),
             nn.ReLU(),
+            # nn.Tanh(),
             nn.Linear(64,1)
         )
 

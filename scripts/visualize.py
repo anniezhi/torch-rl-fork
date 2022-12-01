@@ -34,6 +34,8 @@ parser.add_argument("--agent-speed", type=int, default=1,
                     help="agent maximum step size at one move")
 parser.add_argument("--shuffle", type=str, 
                     help="shuffling obstacles during episodes")
+parser.add_argument("--random-goal", default=False, action="store_true",
+                    help="randomly place the goal in the grid")
 
 args = parser.parse_args()
 
@@ -47,7 +49,7 @@ print(f"Device: {device}\n")
 
 # Load environment
 
-env = utils.make_env(args.env, args.seed, render_mode="human", agent_view_size=args.agent_view_size, agent_speed=args.agent_speed, shuffle=args.shuffle)
+env = utils.make_env(args.env, args.seed, render_mode="human", agent_view_size=args.agent_view_size, agent_speed=args.agent_speed, shuffle=args.shuffle, random_goal=args.random_goal)
 for _ in range(args.shift):
     env.reset()
 print("Environment loaded\n")

@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 
+import numpy as np
+
 import utils
 from .other import device
 from model import ACModel
@@ -47,7 +49,7 @@ class Agent:
             actions = dist.sample()
             actions_scale = dist_scale.sample()
 
-        return actions.cpu().numpy(), actions_scale.cpu().numpy()
+        return actions.cpu().numpy(), np.clip(actions_scale.cpu(),0,1)
 
     def get_action(self, obs):
         return (self.get_actions([obs])[0][0], self.get_actions([obs])[1][0])

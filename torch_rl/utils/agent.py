@@ -1,12 +1,12 @@
 import torch
 import torch.nn.functional as F
 
-# import sys
-# import pathlib
-# sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import numpy as np
+
 from .format import *
 from .storage import *
-# import utils
+
+
 from .other import device
 from ..model import ACModel
 
@@ -20,7 +20,6 @@ class Agent:
 
     def __init__(self, obs_space, action_space, world_size, goal,
                  model_dir, argmax=False, num_envs=1, use_memory=False, use_text=False):
-        # obs_space, self.preprocess_obss = utils.get_obss_preprocessor(obs_space)
         obs_space, self.preprocess_obss = get_obss_preprocessor(obs_space)
         self.goal = torch.flatten(F.one_hot(torch.tensor(goal), num_classes=world_size[0])).type(torch.FloatTensor)
         self.acmodel = ACModel(obs_space, action_space, world_size, use_memory=use_memory, use_text=use_text)
@@ -30,12 +29,10 @@ class Agent:
         if self.acmodel.recurrent:
             self.memories = torch.zeros(self.num_envs, self.acmodel.memory_size, device=device)
 
-        # self.acmodel.load_state_dict(utils_legacy.get_model_state(model_dir))
         self.acmodel.load_state_dict(get_model_state(model_dir))
         self.acmodel.to(device)
         self.acmodel.eval()
         if hasattr(self.preprocess_obss, "vocab"):
-            # self.preprocess_obss.vocab.load_vocab(utils_legacy.get_vocab(model_dir))
             self.preprocess_obss.vocab.load_vocab(get_vocab(model_dir))
 
     def get_actions(self, obss):
@@ -55,7 +52,7 @@ class Agent:
             actions = dist.sample()
             actions_scale = dist_scale.sample()
 
-        return actions.cpu().numpy(), actions_scale.cpu().numpy()
+        return actions.cpu().numpy(), np.clip(actions_scale.cpu(),0,1)
 
     def get_action(self, obs):
         return (self.get_actions([obs])[0][0], self.get_actions([obs])[1][0])

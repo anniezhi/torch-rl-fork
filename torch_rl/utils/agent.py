@@ -21,7 +21,12 @@ class Agent:
     def __init__(self, obs_space, action_space, world_size, goal,
                  model_dir, argmax=False, num_envs=1, use_memory=False, use_text=False):
         obs_space, self.preprocess_obss = get_obss_preprocessor(obs_space)
-        self.goal = torch.flatten(F.one_hot(torch.tensor(goal), num_classes=world_size[0])).type(torch.FloatTensor)
+        if type(goal) is list:
+            def goal_onehot(x):
+                return F.one_hot(torch.tensor(x), num_classes=world_size[0])
+            self.goal = torch.flatten(torch.sum(torch.stack(list(map(goal_onehot, goal))), dim=0)).type(torch.FloatTensor)
+        else:
+            self.goal = torch.flatten(F.one_hot(torch.tensor(goal), num_classes=world_size[0])).type(torch.FloatTensor)
         self.acmodel = ACModel(obs_space, action_space, world_size, use_memory=use_memory, use_text=use_text)
         self.argmax = argmax
         self.num_envs = num_envs

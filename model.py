@@ -29,15 +29,28 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         vision_m = obs_space["image"][1]
 
         # Define image embedding
-        self.image_conv = nn.Sequential(
-            nn.Conv2d(3, 16, (2, 2), padding=((self.world_n-2-vision_n)//2, (self.world_m-2-vision_m)//2)),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2)),
-            nn.Conv2d(16, 32, (2, 2)),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, (2, 2)),
-            nn.ReLU()
-        )
+        if self.world_n == vision_n and self.world_m == vision_m:
+            padding = (0,0)
+            self.image_conv = nn.Sequential(
+                nn.Conv2d(3, 16, (4, 4), padding=padding),
+                nn.ReLU(),
+                nn.MaxPool2d((2, 2)),
+                nn.Conv2d(16, 32, (2, 2)),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, (2, 2)),
+                nn.ReLU()
+            )
+        else:
+            padding = ((self.world_n-2-vision_n)//2, (self.world_m-2-vision_m)//2)
+            self.image_conv = nn.Sequential(
+                nn.Conv2d(3, 16, (2, 2), padding=padding),
+                nn.ReLU(),
+                nn.MaxPool2d((2, 2)),
+                nn.Conv2d(16, 32, (2, 2)),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, (2, 2)),
+                nn.ReLU()
+            )
         self.image_embedding_size = ((self.world_n-2-1)//2-2)*((self.world_m-2-1)//2-2)*64
         # self.image_embedding_size = 1*64  # whatever the view range is, make the final embedding size to 1*64
 

@@ -63,6 +63,8 @@ parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model to handle text input")
 parser.add_argument("--agent-view-size", type=int, default=7,
                     help="agent vision square length")
+parser.add_argument("--agent-view-type", type=str, default='self',
+                    help="shuffling obstacles during episodes")
 parser.add_argument("--agent-speed", type=int, default=1,
                     help="agent maximum step size at one move")
 parser.add_argument("--shuffle", type=str, 
@@ -106,7 +108,13 @@ if __name__ == "__main__":
 
     envs = []
     for i in range(args.procs):
-        envs.append(utils.make_env(args.env, args.seed + 10000 * i, agent_view_size=args.agent_view_size, agent_speed=args.agent_speed, shuffle=args.shuffle, random_goal=args.random_goal))
+        envs.append(utils.make_env(args.env, args.seed + 10000 * i, 
+                                   agent_view_size=args.agent_view_size, 
+                                   agent_view_type=args.agent_view_type,
+                                   agent_speed=args.agent_speed, 
+                                   shuffle=args.shuffle, 
+                                   random_goal=args.random_goal,
+                                   rewards = [1,-1]))
     txt_logger.info("Environments loaded\n")
 
     # Load training status

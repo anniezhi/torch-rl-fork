@@ -28,7 +28,9 @@ def get_obss_preprocessor(obs_space):
         def preprocess_obss(obss, device=None):
             return torch_ac.DictList({
                 "image": preprocess_images([obs["image"] for obs in obss], device=device),
-                "text": preprocess_texts([obs["mission"] for obs in obss], vocab, device=device)
+                "text": preprocess_texts([obs["mission"] for obs in obss], vocab, device=device),
+                "position": preprocess_images([obs['position'] for obs in obss], device=device),
+                "direction": preprocess_numbers([obs['direction'] for obs in obss], device=device)
             })
 
         preprocess_obss.vocab = vocab
@@ -62,6 +64,8 @@ def preprocess_texts(texts, vocab, device=None):
 
     return torch.tensor(indexed_texts, device=device, dtype=torch.long)
 
+def preprocess_numbers(numbers, device=None):
+    return torch.tensor(numbers, device=device, dtype=torch.float).unsqueeze(1)
 
 class Vocabulary:
     """A mapping from tokens to ids with a capacity of `max_size` words.

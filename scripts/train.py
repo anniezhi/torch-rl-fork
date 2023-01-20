@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     # Load model
 
-    acmodel = ACModel(obs_space, envs[0].action_space, (envs[0].spec.kwargs['size'],envs[0].spec.kwargs['size']), args.mem, args.text)
+    acmodel = ACModel(obs_space, envs[0].action_space, (envs[0].spec.kwargs['size'],envs[0].spec.kwargs['size']), args.mem, args.text, args.agent_view_type=='whole')
     if "model_state" in status:
         acmodel.load_state_dict(status["model_state"])
     acmodel.to(device)

@@ -17,7 +17,7 @@ def init_params(m):
 
 
 class ACModel(nn.Module, torch_ac.RecurrentACModel):
-    def __init__(self, obs_space, action_space, world_size, use_memory=False, use_text=False):
+    def __init__(self, obs_space, action_space, world_size, use_memory=False, use_text=False, whole_view=False):
         super().__init__()      #inherent all methods and properties from parent class
 
         # Decide which components are enabled
@@ -25,6 +25,7 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         self.world_m = world_size[1]
         self.use_text = use_text
         self.use_memory = use_memory
+        self.whole_view = whole_view
         vision_n = obs_space["image"][0]
         vision_m = obs_space["image"][1]
 
@@ -54,12 +55,20 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         self.image_embedding_size = ((self.world_n-2-1)//2-2)*((self.world_m-2-1)//2-2)*64
         # self.image_embedding_size = 1*64  # whatever the view range is, make the final embedding size to 1*64
 
-        self.goal_mlp = nn.Sequential(
-            nn.Linear(self.world_m + self.world_n, self.image_embedding_size//2), #(18,32)
-            nn.ReLU(),
-            nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
-            nn.ReLU()
-        )
+        if self.whole_view:
+            self.goal_mlp = nn.Sequential(
+                nn.Linear(self.world_m + self.world_n + 3, self.image_embedding_size//2), #(18+3,32), 18 for goal, 3 for position+direction
+                nn.ReLU(),
+                nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
+                nn.ReLU()
+            )
+        else:
+            self.goal_mlp = nn.Sequential(
+                nn.Linear(self.world_m + self.world_n, self.image_embedding_size//2), #(18+3,32), 18 for goal, 3 for position+direction
+                nn.ReLU(),
+                nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
+                nn.ReLU()
+            )
 
         # Define memory
         if self.use_memory:
@@ -123,6 +132,11 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
     def forward(self, obs, goal, memory):
         x = obs.image.transpose(1, 3).transpose(2, 3)
         goal = goal.repeat([x.shape[0],1]).type(torch.FloatTensor)
+        if self.whole_view:
+            position = obs.position
+            direction = obs.direction
+            status = torch.concat([position, direction], dim=1)
+            goal = torch.concat([goal, status], dim=1)
 
         x = self.image_conv(x)
         x = x.reshape(x.shape[0], -1)   #x.shape=[batch_size,channel_number]

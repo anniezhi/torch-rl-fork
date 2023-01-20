@@ -74,7 +74,7 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
 
         # Resize image embedding
         self.embedding_size = self.semi_memory_size
-        # self.embedding_size += self.image_embedding_size   # allow for goal embedding
+        self.embedding_size += self.image_embedding_size   # allow for goal embedding
         if self.use_text:
             self.embedding_size += self.text_embedding_size
         if self.use_memory:
@@ -127,17 +127,17 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         x = self.image_conv(x)
         x = x.reshape(x.shape[0], -1)   #x.shape=[batch_size,channel_number]
 
-        # goal_after = self.goal_mlp(goal)
+        goal_after = self.goal_mlp(goal)
 
         if self.use_memory:
             hidden = (memory[:, :self.semi_memory_size], memory[:, self.semi_memory_size:])
             hidden = self.memory_rnn(x, hidden)
             memory = torch.cat(hidden, dim=1)
-            # embedding = torch.cat((x, hidden[0], goal_after), dim=1)
-            embedding = torch.cat((x, hidden[0]), dim=1)
+            embedding = torch.cat((x, hidden[0], goal_after), dim=1)
+            # embedding = torch.cat((x, hidden[0]), dim=1)
         else:
-            # embedding = torch.cat((x, goal_after), dim=1)
-            embedding = x
+            embedding = torch.cat((x, goal_after), dim=1)
+            # embedding = x
 
         if self.use_text:
             embed_text = self._get_embed_text(obs.text)

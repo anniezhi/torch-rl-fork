@@ -118,7 +118,7 @@ if __name__ == "__main__":
                                     agent_speed=args.agent_speed, 
                                     shuffle=args.shuffle, 
                                     random_goal=args.random_goal,
-                                    rewards = [1,-1]))
+                                    rewards = args.rewards))
     else:
         for i in range(args.procs):
             envs.append(utils.make_env(args.env, args.seed + 10000 * i, 

@@ -71,6 +71,9 @@ parser.add_argument("--shuffle", type=str,
                     help="shuffling obstacles during episodes")
 parser.add_argument("--random-goal", default=False, action="store_true",
                     help="randomly place the goal in the grid")
+parser.add_argument("--custom-rewards", default=False, action="store_true",
+                    help="customize rewards in a multi-goal session")
+parser.add_argument('--rewards', nargs='+', type=int)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -107,14 +110,23 @@ if __name__ == "__main__":
     # Load environments
 
     envs = []
-    for i in range(args.procs):
-        envs.append(utils.make_env(args.env, args.seed + 10000 * i, 
-                                   agent_view_size=args.agent_view_size, 
-                                   agent_view_type=args.agent_view_type,
-                                   agent_speed=args.agent_speed, 
-                                   shuffle=args.shuffle, 
-                                   random_goal=args.random_goal,
-                                   rewards = [1,-1]))
+    if args.custom_rewards:
+        for i in range(args.procs):
+            envs.append(utils.make_env(args.env, args.seed + 10000 * i, 
+                                    agent_view_size=args.agent_view_size, 
+                                    agent_view_type=args.agent_view_type,
+                                    agent_speed=args.agent_speed, 
+                                    shuffle=args.shuffle, 
+                                    random_goal=args.random_goal,
+                                    rewards = [1,-1]))
+    else:
+        for i in range(args.procs):
+            envs.append(utils.make_env(args.env, args.seed + 10000 * i, 
+                                    agent_view_size=args.agent_view_size, 
+                                    agent_view_type=args.agent_view_type,
+                                    agent_speed=args.agent_speed, 
+                                    shuffle=args.shuffle, 
+                                    random_goal=args.random_goal))
     txt_logger.info("Environments loaded\n")
 
     # Load training status

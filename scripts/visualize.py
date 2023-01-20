@@ -30,12 +30,16 @@ parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model")
 parser.add_argument("--agent-view-size", type=int, default=7,
                     help="agent vision square length")
+parser.add_argument("--agent-view-type", type=str, default='self',
+                    help="shuffling obstacles during episodes")
 parser.add_argument("--agent-speed", type=int, default=1,
                     help="agent maximum step size at one move")
 parser.add_argument("--shuffle", type=str, 
                     help="shuffling obstacles during episodes")
 parser.add_argument("--random-goal", default=False, action="store_true",
                     help="randomly place the goal in the grid")
+parser.add_argument("--test-mode", default=False, action="store_true",
+                    help="not training, only testing code")
 
 args = parser.parse_args()
 
@@ -48,18 +52,24 @@ utils.seed(args.seed)
 print(f"Device: {device}\n")
 
 # Load environment
-agent_model = args.model
-agent_view_size, agent_speed, seed = agent_model.split('-')[1:4]
-agent_view_size = int(agent_view_size[1:])
-agent_speed = int(agent_speed[1:])
-seed = int(seed[4:])
+if not args.test_mode:
+    agent_model = args.model
+    agent_view_size, agent_speed, seed = agent_model.split('-')[1:4]
+    agent_view_size = int(agent_view_size[1:])
+    agent_speed = int(agent_speed[1:])
+    seed = int(seed[4:])
+else:
+    agent_view_size = args.agent_view_size
+    agent_speed = args.agent_speed
+    seed = args.seed
 
-env = utils.make_env(args.env, args.seed, render_mode="human", 
-                     agent_view_size=agent_view_size, 
+env = utils.make_env(args.env, seed, render_mode="human", 
+                     agent_view_size=agent_view_size,
+                     agent_view_type=args.agent_view_type,
                      agent_speed=agent_speed, 
                      shuffle=args.shuffle, 
-                     random_goal=args.random_goal,
-                     rewards=[1,0])
+                     random_goal=args.random_goal,)
+                    #  rewards=[1,0])
 for _ in range(args.shift):
     env.reset()
 print("Environment loaded\n")

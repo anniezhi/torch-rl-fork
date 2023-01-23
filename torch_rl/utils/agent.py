@@ -19,7 +19,7 @@ class Agent:
     - to analyze the feedback (i.e. reward and done state) of its action."""
 
     def __init__(self, obs_space, action_space, world_size, goal,
-                 model_dir, argmax=False, num_envs=1, use_memory=False, use_text=False):
+                 model_dir, argmax=False, num_envs=1, use_memory=False, use_text=False, whole_view=False):
         obs_space, self.preprocess_obss = get_obss_preprocessor(obs_space)
         if type(goal) is list:
             def goal_onehot(x):
@@ -27,7 +27,7 @@ class Agent:
             self.goal = torch.flatten(torch.sum(torch.stack(list(map(goal_onehot, goal))), dim=0)).type(torch.FloatTensor)
         else:
             self.goal = torch.flatten(F.one_hot(torch.tensor(goal), num_classes=world_size[0])).type(torch.FloatTensor)
-        self.acmodel = ACModel(obs_space, action_space, world_size, use_memory=use_memory, use_text=use_text)
+        self.acmodel = ACModel(obs_space, action_space, world_size, use_memory=use_memory, use_text=use_text, whole_view=whole_view)
         self.argmax = argmax
         self.num_envs = num_envs
 

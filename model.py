@@ -55,20 +55,20 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         self.image_embedding_size = ((self.world_n-2-1)//2-2)*((self.world_m-2-1)//2-2)*64
         # self.image_embedding_size = 1*64  # whatever the view range is, make the final embedding size to 1*64
 
-        if self.whole_view:
-            self.goal_mlp = nn.Sequential(
-                nn.Linear(self.world_m + self.world_n + 3, self.image_embedding_size//2), #(18+3,32), 18 for goal, 3 for position+direction
-                nn.ReLU(),
-                nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
-                nn.ReLU()
-            )
-        else:
-            self.goal_mlp = nn.Sequential(
-                nn.Linear(self.world_m + self.world_n, self.image_embedding_size//2), #(18+3,32), 18 for goal, 3 for position+direction
-                nn.ReLU(),
-                nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
-                nn.ReLU()
-            )
+        # if self.whole_view:
+        #     self.goal_mlp = nn.Sequential(
+        #         nn.Linear(self.world_m + self.world_n + 3, self.image_embedding_size//2), #(18+3,32), 18 for goal, 3 for position+direction
+        #         nn.ReLU(),
+        #         nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
+        #         nn.ReLU()
+        #     )
+        # else:
+        #     self.goal_mlp = nn.Sequential(
+        #         nn.Linear(self.world_m + self.world_n, self.image_embedding_size//2), #(18+3,32), 18 for goal, 3 for position+direction
+        #         nn.ReLU(),
+        #         nn.Linear(self.image_embedding_size//2,self.image_embedding_size),     #(32,64)
+        #         nn.ReLU()
+        #     )
 
         # Define memory
         if self.use_memory:
@@ -141,7 +141,8 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
         x = self.image_conv(x)
         x = x.reshape(x.shape[0], -1)   #x.shape=[batch_size,channel_number]
 
-        goal_after = self.goal_mlp(goal)
+        # goal_after = self.goal_mlp(goal)
+        goal_after = x
 
         if self.use_memory:
             hidden = (memory[:, :self.semi_memory_size], memory[:, self.semi_memory_size:])

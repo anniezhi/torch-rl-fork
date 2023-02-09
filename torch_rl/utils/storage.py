@@ -3,6 +3,7 @@ import os
 import torch
 import logging
 import sys
+import platform
 
 # import utils
 from .other import device
@@ -17,8 +18,14 @@ def create_folders_if_necessary(path):
 def get_storage_dir():
     if "RL_STORAGE" in os.environ:
         return os.environ["RL_STORAGE"]
-    if sys.platform == 'linux':
-        return "/local/home/xiazhi/Desktop/code/torch-rl-fork/storage"
+    platform_info = platform.uname()
+    system = platform_info[0]
+    node = platform_info[1]
+    if system == 'linux':
+        if 'ohws59' in node:
+            return "/local/home/xiazhi/Desktop/code/torch-rl-fork/storage"
+        if 'eu-login' in node:
+            return "/cluster/home/xiazhi/thesis/code/torch-rl-fork/storage/"
     return "/Users/anniezhi/Desktop/MasterThesis_RLwithUserIntention/code/torch-rl-fork/storage"
 
 

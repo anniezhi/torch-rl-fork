@@ -40,6 +40,9 @@ parser.add_argument("--random-goal", default=False, action="store_true",
                     help="randomly place the goal in the grid")
 parser.add_argument("--test-mode", default=False, action="store_true",
                     help="not training, only testing code")
+parser.add_argument("--no-highlight", dest='highlight', action="store_false",
+                    help="highlight agent view range")
+parser.set_defaults(highlight=True)
 
 args = parser.parse_args()
 
@@ -68,7 +71,8 @@ env = utils.make_env(args.env, seed, render_mode="human",
                      agent_view_type=args.agent_view_type,
                      agent_speed=agent_speed, 
                      shuffle=args.shuffle, 
-                     random_goal=args.random_goal,)
+                     random_goal=args.random_goal,
+                     highlight=args.highlight)
                     #  rewards=[1,0])
 for _ in range(args.shift):
     env.reset()
@@ -93,6 +97,7 @@ env.render()
 
 for episode in range(args.episodes):
     obs, _ = env.reset()
+    env_grid = env.get_grid().encode()
 
     while True:
         env.render()
@@ -105,12 +110,18 @@ for episode in range(args.episodes):
         agent.analyze_feedback(reward, done)
 
         if done or env.window.closed:
+            if args.gif:
+                print("Saving gif... ", end="")
+                write_gif(numpy.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
+                print("Saved episode {}".format(episode))
+                frames = []
             break
 
     if env.window.closed:
         break
 
-if args.gif:
-    print("Saving gif... ", end="")
-    write_gif(numpy.array(frames), args.gif+".gif", fps=1/args.pause)
-    print("Done.")
+print('Done.')
+# if args.gif:
+#     print("Saving gif... ", end="")
+#     write_gif(numpy.array(frames), args.gif+".gif", fps=1/args.pause)
+#     print("Done.")

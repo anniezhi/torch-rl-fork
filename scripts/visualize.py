@@ -102,7 +102,7 @@ for episode in range(args.episodes):
     while True:
         env.render()
         if args.gif:
-            frames.append(numpy.moveaxis(env.get_frame(), 2, 0))
+            frames.append(numpy.moveaxis(env.get_frame(highlight=args.highlight), 2, 0))
 
         action = agent.get_action(obs)
         obs, reward, terminated, truncated, _, _, _ = env.step(action)

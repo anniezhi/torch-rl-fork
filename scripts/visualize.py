@@ -95,6 +95,8 @@ if args.gif:
 # Create a window to view the environment
 env.render()
 
+env_grids = []
+
 for episode in range(args.episodes):
     obs, _ = env.reset()
     env_grid = env.get_grid().encode()
@@ -111,8 +113,9 @@ for episode in range(args.episodes):
 
         if done or env.window.closed:
             if args.gif:
-                print("Saving gif... ", end="")
+                print("Saving episode... ", end="")
                 write_gif(numpy.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
+                env_grids.append(env_grid)
                 print("Saved episode {}".format(episode))
                 frames = []
             break
@@ -120,6 +123,10 @@ for episode in range(args.episodes):
     if env.window.closed:
         break
 
+if args.gif:
+    env_grids = numpy.array(env_grids)
+    print('Saving grids... ', end="")
+    numpy.save(args.gif+'env_grids.npy', env_grids)
 print('Done.')
 # if args.gif:
 #     print("Saving gif... ", end="")

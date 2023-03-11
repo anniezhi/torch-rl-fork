@@ -1,5 +1,5 @@
 import argparse
-import numpy
+import numpy as np
 
 import utils
 from utils import device
@@ -96,15 +96,20 @@ if args.gif:
 env.render()
 
 env_grids = []
+env_goals = []
 
 for episode in range(args.episodes):
     obs, _ = env.reset()
     env_grid = env.get_grid().encode()
+    env_goal = env.get_goal()
+    env_goal_mask = np.zeros_like(env_grid)
+    env_goal_mask[env_goal] = 1
+    env_goal = env_grid * env_goal_mask
 
     while True:
         env.render()
         if args.gif:
-            frames.append(numpy.moveaxis(env.get_frame(highlight=args.highlight), 2, 0))
+            frames.append(np.moveaxis(env.get_frame(highlight=args.highlight), 2, 0))
 
         action = agent.get_action(obs)
         obs, reward, terminated, truncated, _, _, _ = env.step(action)
@@ -114,8 +119,9 @@ for episode in range(args.episodes):
         if done or env.window.closed:
             if args.gif:
                 print("Saving episode... ", end="")
-                write_gif(numpy.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
+                write_gif(np.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
                 env_grids.append(env_grid)
+                env_goals.append(env_goal)
                 print("Saved episode {}".format(episode))
                 frames = []
             break
@@ -124,11 +130,15 @@ for episode in range(args.episodes):
         break
 
 if args.gif:
-    env_grids = numpy.array(env_grids)
+    env_grids = np.array(env_grids)
     print('Saving grids... ', end="")
-    numpy.save(args.gif+'env_grids.npy', env_grids)
+    np.save(args.gif+'env_grids.npy', env_grids)
+
+    env_goals = np.array(env_goals)
+    print('Saving goals... ', end="")
+    np.save(args.gif+'env_goals.npy', env_goals)
 print('Done.')
 # if args.gif:
 #     print("Saving gif... ", end="")
-#     write_gif(numpy.array(frames), args.gif+".gif", fps=1/args.pause)
+#     write_gif(np.array(frames), args.gif+".gif", fps=1/args.pause)
 #     print("Done.")

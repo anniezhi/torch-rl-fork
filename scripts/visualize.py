@@ -42,6 +42,7 @@ parser.add_argument("--test-mode", default=False, action="store_true",
                     help="not training, only testing code")
 parser.add_argument("--no-highlight", dest='highlight', action="store_false",
                     help="highlight agent view range")
+parser.add_argument('--rewards', nargs='+', type=int)
 parser.set_defaults(highlight=True)
 
 args = parser.parse_args()
@@ -72,8 +73,8 @@ env = utils.make_env(args.env, seed, render_mode="human",
                      agent_speed=agent_speed, 
                      shuffle=args.shuffle, 
                      random_goal=args.random_goal,
-                     highlight=args.highlight)
-                    #  rewards=[1,0])
+                     highlight=args.highlight,
+                     rewards=args.rewards)
 for _ in range(args.shift):
     env.reset()
 print("Environment loaded\n")

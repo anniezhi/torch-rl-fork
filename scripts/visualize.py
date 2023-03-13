@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-
+from skimage.measure import block_reduce
 import utils
 from utils import device
 
@@ -43,6 +43,7 @@ parser.add_argument("--test-mode", default=False, action="store_true",
 parser.add_argument("--no-highlight", dest='highlight', action="store_false",
                     help="highlight agent view range")
 parser.add_argument('--rewards', nargs='+', type=int)
+
 parser.set_defaults(highlight=True)
 
 args = parser.parse_args()
@@ -96,16 +97,19 @@ if args.gif:
 # Create a window to view the environment
 env.render()
 
-env_grids = []
+env_grids_full = []
+env_grids_encode = []
 env_goals = []
+agent_poss = []
 
 for episode in range(args.episodes):
     obs, _ = env.reset()
     env_grid = env.get_grid().encode()
+
+    env_grid_full = np.moveaxis(env.get_frame(highlight=args.highlight, show_agent_pos=False), 2, 0)
+
     env_goal = env.get_goal()
-    env_goal_mask = np.zeros_like(env_grid)
-    env_goal_mask[env_goal] = 1
-    env_goal = env_grid * env_goal_mask
+    
 
     while True:
         env.render()
@@ -121,8 +125,19 @@ for episode in range(args.episodes):
             if args.gif:
                 print("Saving episode... ", end="")
                 write_gif(np.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
-                env_grids.append(env_grid)
+                env_grids_encode.append(env_grid)
+
+                agent_pos = (np.array(frames)-env_grid_full).mean(axis=0).clip(0,1)
+                agent_poss.append(block_reduce(agent_pos, block_size=(1,32,32), func=np.max))
+                
+                env_grid_full = block_reduce(env_grid_full, block_size=(1,32,32), func=np.min)
+                env_grids_full.append(env_grid_full)
+
+                env_goal_mask = np.zeros_like(env_grid_full)
+                env_goal_mask[:, env_goal[0], env_goal[1]] = 1
+                env_goal = env_grid_full * env_goal_mask
                 env_goals.append(env_goal)
+                
                 print("Saved episode {}".format(episode))
                 frames = []
             break
@@ -131,9 +146,17 @@ for episode in range(args.episodes):
         break
 
 if args.gif:
-    env_grids = np.array(env_grids)
-    print('Saving grids... ', end="")
-    np.save(args.gif+'env_grids.npy', env_grids)
+    env_grids_encode = np.array(env_grids_encode)
+    print('Saving grids encode... ', end="")
+    np.save(args.gif+'env_grids.npy', env_grids_encode)
+
+    env_grids_full = np.array(env_grids_full)
+    print('Saving grids full... ', end="")
+    np.save(args.gif+'env_grids_full.npy', env_grids_full)
+
+    agent_poss = np.array(agent_poss)
+    print('Saving agent poss... ', end="")
+    np.save(args.gif+'agent_poss.npy', agent_poss)
 
     env_goals = np.array(env_goals)
     print('Saving goals... ', end="")

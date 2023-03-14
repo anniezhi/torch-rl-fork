@@ -127,17 +127,18 @@ for episode in range(args.episodes):
                 write_gif(np.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
                 env_grids_encode.append(env_grid)
 
-                agent_pos = (np.array(frames)-env_grid_full).mean(axis=0).clip(0,1)
-                agent_poss.append(block_reduce(agent_pos, block_size=(1,32,32), func=np.max))
+                agent_pos = (np.array(frames)-env_grid_full).mean(axis=0)
+                agent_pos = block_reduce(agent_pos, block_size=(1,32,32), func=np.max)
+                agent_poss.append((agent_pos>0)*255)
                 
                 env_grid_full = block_reduce(env_grid_full, block_size=(1,32,32), func=np.min)
                 env_grids_full.append(env_grid_full)
 
                 env_goal_mask = np.zeros_like(env_grid_full)
-                env_goal_mask[:, env_goal[0], env_goal[1]] = 1
+                env_goal_mask[:, env_goal[1], env_goal[0]] = 1
                 env_goal = env_grid_full * env_goal_mask
                 env_goals.append(env_goal)
-                
+
                 print("Saved episode {}".format(episode))
                 frames = []
             break

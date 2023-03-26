@@ -104,6 +104,7 @@ if not os.path.exists(args.save):
     os.makedirs(args.save)
 
 env_grids_encode = []
+env_grids_rgb_full = []
 env_grids_rgb = []
 env_goals_encode = []
 env_goals_rgb = []
@@ -121,8 +122,9 @@ for episode in range(args.episodes):
     print("Episode {}".format(episode))
     env_grids_encode.append(env_grid_encode)
     
-    env_grid_full = block_reduce(env_grid_full, block_size=(32,32,1), func=np.min)
-    env_grids_rgb.append(env_grid_full)
+    env_grid_reduce = block_reduce(env_grid_full, block_size=(32,32,1), func=np.min)
+    env_grids_rgb_full.append(env_grid_full)
+    env_grids_rgb.append(env_grid_reduce)
 
     # env_goal_mask = np.zeros_like(env_grid_full)
     # env_goal_mask[env_goal[1], env_goal[0],:] = 1
@@ -159,9 +161,14 @@ for episode in range(args.episodes):
     #     break
 
 if args.save:
+    
     env_grids_encode = np.array(env_grids_encode)
     print('Saving grids encode... ', end="")
     np.save(args.save+'env_grids_encode.npy', env_grids_encode)
+
+    env_grids_rgb_full = np.array(env_grids_rgb_full)
+    print('Saving grids rgb in full size ... ', end="")
+    np.save(args.save+'env_grids_rgb_full.npy', env_grids_rgb_full)
 
     env_grids_rgb = np.array(env_grids_rgb)
     print('Saving grids rgb... ', end="")

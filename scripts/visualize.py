@@ -3,7 +3,7 @@ import numpy as np
 from skimage.measure import block_reduce
 import utils
 from utils import device
-
+import os
 
 # Parse arguments
 
@@ -94,19 +94,26 @@ if args.gif:
 
     frames = []
 
+    if not os.path.exists(args.gif):
+        os.makedirs(args.gif)
+
 # Create a window to view the environment
 env.render()
 
 env_grids_full = []
 env_grids_encode = []
+env_grids_double = []
+env_grids_reduce = []
 env_goals = []
 agent_poss = []
 
 for episode in range(args.episodes):
     obs, _ = env.reset()
-    env_grid = env.get_grid().encode()
+    env_grid_encode = env.get_grid().encode()
+    env_grid_encode = np.moveaxis(env_grid_encode, 0, 1)
 
-    env_grid_full = np.moveaxis(env.get_frame(highlight=args.highlight, show_agent_pos=False), 2, 0)
+    # env_grid_full = np.moveaxis(env.get_frame(highlight=args.highlight, show_agent_pos=False), 2, 0)
+    env_grid_full = env.get_frame(highlight=args.highlight, show_agent_pos=False)
 
     env_goal = env.get_goal()
     
@@ -114,7 +121,8 @@ for episode in range(args.episodes):
     while True:
         env.render()
         if args.gif:
-            frames.append(np.moveaxis(env.get_frame(highlight=args.highlight), 2, 0))
+            # frames.append(np.moveaxis(env.get_frame(highlight=args.highlight), 2, 0))
+            frames.append(env.get_frame(highlight=args.highlight))
 
         action = agent.get_action(obs)
         obs, reward, terminated, truncated, _, _, _ = env.step(action)
@@ -124,19 +132,26 @@ for episode in range(args.episodes):
         if done or env.window.closed:
             if args.gif:
                 print("Saving episode... ", end="")
+                # frames_double = block_reduce(np.array(frames), block_size=(16,16,1), func=np.mean)
                 write_gif(np.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
-                env_grids_encode.append(env_grid)
+                env_grids_encode.append(env_grid_encode)
 
                 agent_pos = (np.array(frames)-env_grid_full).mean(axis=0)
-                agent_pos = block_reduce(agent_pos, block_size=(1,32,32), func=np.max)
+                agent_pos = block_reduce(agent_pos, block_size=(16,16,1), func=np.max)
                 agent_poss.append((agent_pos>0)*255)
                 
-                env_grid_full = block_reduce(env_grid_full, block_size=(1,32,32), func=np.min)
+                # env_grid_full = block_reduce(env_grid_full, block_size=(1,32,32), func=np.min)
                 env_grids_full.append(env_grid_full)
 
-                env_goal_mask = np.zeros_like(env_grid_full)
-                env_goal_mask[:, env_goal[1], env_goal[0]] = 1
-                env_goal = env_grid_full * env_goal_mask
+                env_grid_double = block_reduce(env_grid_full, block_size=(16,16,1), func=np.min)
+                env_grids_double.append(env_grid_double)
+
+                env_grid_reduce = block_reduce(env_grid_full, block_size=(32,32,1), func=np.min)
+                env_grids_reduce.append(env_grid_reduce)
+
+                env_goal_mask = np.zeros_like(env_grid_double)
+                env_goal_mask[env_goal[1]*2:env_goal[1]*2+2, env_goal[0]*2:env_goal[0]*2+2, :] = 1
+                env_goal = env_grid_double * env_goal_mask
                 env_goals.append(env_goal)
 
                 print("Saved episode {}".format(episode))
@@ -149,11 +164,19 @@ for episode in range(args.episodes):
 if args.gif:
     env_grids_encode = np.array(env_grids_encode)
     print('Saving grids encode... ', end="")
-    np.save(args.gif+'env_grids.npy', env_grids_encode)
+    np.save(args.gif+'env_grids_encode.npy', env_grids_encode)
 
     env_grids_full = np.array(env_grids_full)
     print('Saving grids full... ', end="")
-    np.save(args.gif+'env_grids_full.npy', env_grids_full)
+    np.save(args.gif+'env_grids_rgb_full.npy', env_grids_full)
+
+    env_grids_double = np.array(env_grids_double)
+    print('Saving grids double... ', end="")
+    np.save(args.gif+'env_grids_rgb_double.npy', env_grids_double)
+
+    env_grids_reduce = np.array(env_grids_reduce)
+    print('Saving grids reduce... ', end="")
+    np.save(args.gif+'env_grids_rgb_reduce.npy', env_grids_reduce)
 
     agent_poss = np.array(agent_poss)
     print('Saving agent poss... ', end="")

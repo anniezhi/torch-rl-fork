@@ -106,6 +106,8 @@ env_grids_double = []
 env_grids_reduce = []
 env_goals = []
 agent_poss = []
+agent_poss_double = []
+agent_poss_trimmed = []
 
 for episode in range(args.episodes):
     obs, _ = env.reset()
@@ -132,19 +134,27 @@ for episode in range(args.episodes):
         if done or env.window.closed:
             if args.gif:
                 print("Saving episode... ", end="")
-                # frames_double = block_reduce(np.array(frames), block_size=(16,16,1), func=np.mean)
                 write_gif(np.array(frames), args.gif+str(episode)+".gif", fps=1/args.pause)
-                env_grids_encode.append(env_grid_encode)
-
-                agent_pos = (np.array(frames)-env_grid_full).mean(axis=0)
-                agent_pos = block_reduce(agent_pos, block_size=(16,16,1), func=np.max)
-                agent_poss.append((agent_pos>0)*255)
+                frames_double = block_reduce(np.array(frames), block_size=(1,16,16,1), func=np.min)
+                write_gif(frames_double, args.gif+str(episode)+"-double.gif", fps=1/args.pause)
                 
-                # env_grid_full = block_reduce(env_grid_full, block_size=(1,32,32), func=np.min)
+                # agent_pos = (np.array(frames)-env_grid_full).max(axis=0)
+                # agent_pos = block_reduce(agent_pos, block_size=(16,16,1), func=np.mean)
+                # agent_pos /= agent_pos.max()
+                # agent_poss.append(agent_pos)
+
+                env_grids_encode.append(env_grid_encode)
+                
                 env_grids_full.append(env_grid_full)
 
                 env_grid_double = block_reduce(env_grid_full, block_size=(16,16,1), func=np.min)
                 env_grids_double.append(env_grid_double)
+
+                agent_pos_double = (np.array(frames_double)-env_grid_double).max(axis=0)
+                agent_poss_double.append(agent_pos_double)
+
+                agent_pos_trimmed = (np.array(frames_double)[:10]-env_grid_double).max(axis=0)
+                agent_poss_trimmed.append(agent_pos_trimmed)
 
                 env_grid_reduce = block_reduce(env_grid_full, block_size=(32,32,1), func=np.min)
                 env_grids_reduce.append(env_grid_reduce)
@@ -178,9 +188,13 @@ if args.gif:
     print('Saving grids reduce... ', end="")
     np.save(args.gif+'env_grids_rgb_reduce.npy', env_grids_reduce)
 
-    agent_poss = np.array(agent_poss)
+    agent_poss_double = np.array(agent_poss_double)
     print('Saving agent poss... ', end="")
-    np.save(args.gif+'agent_poss.npy', agent_poss)
+    np.save(args.gif+'agent_poss.npy', agent_poss_double)
+
+    agent_poss_trimmed = np.array(agent_poss_trimmed)
+    print('Saving agent poss trimmed... ', end="")
+    np.save(args.gif+'agent_poss_trimmed.npy', agent_poss_trimmed)
 
     env_goals = np.array(env_goals)
     print('Saving goals... ', end="")

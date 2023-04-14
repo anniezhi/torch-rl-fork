@@ -24,7 +24,7 @@ def get_storage_dir():
     if system == 'linux':
         if 'ohws59' in node:
             return "/local/home/xiazhi/Desktop/code/torch-rl-fork/storage"
-        if 'eu-login' in node:
+        if 'eu' in node:
             return "/cluster/home/xiazhi/thesis/code/torch-rl-fork/storage/"
     return "/Users/anniezhi/Desktop/MasterThesis_RLwithUserIntention/code/torch-rl-fork/storage"
 

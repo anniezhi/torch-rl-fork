@@ -109,8 +109,13 @@ agent_poss = []
 agent_poss_double = []
 agent_poss_trimmed = []
 
-for episode in range(args.episodes):
+episode = 0
+
+for episode_count in range(int(args.episodes*1.2)):
     obs, _ = env.reset()
+    if len(env.path) < env.num_crossings:
+        continue
+
     env_grid_encode = env.get_grid().encode()
     env_grid_encode = np.moveaxis(env_grid_encode, 0, 1)
 
@@ -166,6 +171,7 @@ for episode in range(args.episodes):
 
                 print("Saved episode {}".format(episode))
                 frames = []
+                episode += 1
             break
 
     if env.window.closed:

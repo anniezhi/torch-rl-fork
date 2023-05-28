@@ -100,7 +100,7 @@ print("Environment loaded\n")
 # Create a window to view the environment
 # env.render()
 
-if not os.path.exists(args.save):
+if args.save is not None and not os.path.exists(args.save):
     os.makedirs(args.save)
 
 env_grids_encode = []
@@ -195,3 +195,13 @@ print('Done.')
 #     print("Saving gif... ", end="")
 #     write_gif(np.array(frames), args.gif+".gif", fps=1/args.pause)
 #     print("Done.")
+
+## standalone visualize
+# import matplotlib.pyplot as plt
+# fig = plt.figure(frameon=False)
+# fig.set_size_inches(2,2)
+# ax = plt.Axes(fig, [0., 0., 1., 1.])
+# ax.set_axis_off()
+# fig.add_axes(ax)
+# ax.imshow(env_grid_full, aspect='auto')
+# fig.savefig('minigrid_N1_2.png')

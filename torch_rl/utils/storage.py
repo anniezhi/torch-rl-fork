@@ -21,7 +21,7 @@ def get_storage_dir():
     platform_info = platform.uname()
     system = platform_info[0]
     node = platform_info[1]
-    if system == 'linux':
+    if system.lower() == 'linux':
         if 'ohws59' in node:
             return "/local/home/xiazhi/Desktop/code/torch-rl-fork/storage"
         if 'eu' in node:
